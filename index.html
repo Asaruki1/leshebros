@@ -48,8 +48,8 @@
 
 <div id="chat"></div>
 
-<img id="handImg" src="https://i.imgur.com/FfHR6Sl.png" class="hand"/>
-<audio id="slapSound" src="https://www.soundjay.com/human/sounds/slap-01.mp3"></audio>
+<img id="handImg" src="hand.png" class="hand"/>
+<audio id="slapSound" src="slap2.mp3"></audio>
 
 <script>
 const leftImg = document.getElementById('leftImg');
@@ -86,34 +86,42 @@ slapBtn.addEventListener('click', () => {
   slapSound.currentTime = 0;
   slapSound.play();
   
-  // Рассчитать позицию руки по центру фоток
+  // Рассчитать позиции фоток
   const leftRect = leftImg.getBoundingClientRect();
   const rightRect = rightImg.getBoundingClientRect();
   const topMiddle = leftRect.top + leftRect.height/2;
-  const leftStart = leftRect.right;
-  const rightEnd = rightRect.left;
+
+  // Решаем, кто говорит
+  let isLeft = Math.random() > 0.5;
+  let phrase = isLeft 
+    ? `Левый: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`
+    : `Правый: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
+  chat.innerHTML += `<p>${phrase}</p>`;
+  chat.scrollTop = chat.scrollHeight;
+
+  // Определяем цель руки
+  let startX, endX;
+  if(isLeft){
+    startX = leftRect.right;
+    endX = rightRect.left;
+  } else {
+    startX = rightRect.left;
+    endX = leftRect.right;
+  }
 
   handImg.style.top = topMiddle + "px";
-  handImg.style.left = leftStart + "px";
+  handImg.style.left = startX + "px";
   handImg.style.display = "block";
 
-  // Анимация руки
   handImg.animate([
     { transform: "translate(0, -50%) rotate(-45deg) scale(0)" },
-    { transform: `translate(${rightEnd - leftStart}px, -50%) rotate(-45deg) scale(1.2)` },
-    { transform: `translate(${rightEnd - leftStart}px, -50%) rotate(-45deg) scale(1)` }
+    { transform: `translate(${endX - startX}px, -50%) rotate(-45deg) scale(1.2)` },
+    { transform: `translate(${endX - startX}px, -50%) rotate(-45deg) scale(1)` }
   ], {
     duration: 400,
     fill: "forwards"
   });
 
-  // Случайная фраза
-  const phrase = Math.random() > 0.5 
-    ? `Левый: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`
-    : `Правый: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
-    
-  chat.innerHTML += `<p>${phrase}</p>`;
-  chat.scrollTop = chat.scrollHeight;
 });
 </script>
 
