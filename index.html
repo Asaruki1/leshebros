@@ -2,135 +2,122 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Лещеброс</title>
+<title>Лещеброс Multiplayer</title>
 <style>
-  body { 
-    font-family: Arial, sans-serif; 
-    background: linear-gradient(135deg,#8e2de2,#4a00e0); 
-    color: white; 
-    text-align: center; 
-    padding: 20px; 
-  }
-  h1 { font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 5px #000; }
-  .characters { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
-  .character-box { text-align: center; }
-  .character-box img { width: 150px; height: 150px; object-fit: cover; border: 3px solid transparent; border-radius: 15px; cursor: pointer; transition: transform 0.3s; }
-  .character-box img.selected { border-color: yellow; transform: scale(1.1); }
-  input.name-input { margin-bottom: 5px; padding: 5px; border-radius: 5px; border: none; text-align: center; }
-  button { padding: 15px 30px; font-size: 18px; border: none; border-radius: 15px; cursor: pointer; background: yellow; color: black; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; }
-  button:hover { transform: scale(1.05); }
-  #chat { max-width: 600px; margin: 20px auto; background: rgba(255,255,255,0.9); color: black; border-radius: 15px; padding: 15px; height: 250px; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-  .hand { 
-    position: absolute; 
-    width: 100px; 
-    transform: translate(-50%, -50%) rotate(-45deg); 
-    display: none; 
-    z-index: 10; 
-  }
+body { font-family: Arial; background: linear-gradient(135deg,#8e2de2,#4a00e0); color: white; text-align: center; padding: 20px; }
+h1 { font-size: 3em; text-shadow: 2px 2px 5px #000; }
+.characters { display:flex; justify-content:center; gap:30px; margin-bottom:20px; }
+.character-box { text-align:center; position: relative; }
+.character-box img { width:150px; height:150px; object-fit:cover; border-radius:15px; border:3px solid transparent; cursor:pointer; }
+input.name-input { margin-bottom:5px; padding:5px; border-radius:5px; border:none; text-align:center; }
+button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cursor:pointer; background:yellow; color:black; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+#chat { max-width:600px; margin:20px auto; background:rgba(255,255,255,0.9); color:black; border-radius:15px; padding:15px; height:250px; overflow-y:auto; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
+.hand { position:absolute; width:100px; transform:translate(-50%,-50%) rotate(-45deg); display:none; z-index:10; }
+.scoreboard { margin-top:15px; font-size:18px; }
 </style>
 </head>
 <body>
 
-<h1>Лещеброс</h1>
+<h1>Лещеброс Multiplayer</h1>
 
 <div class="characters">
   <div class="character-box">
-    <input class="name-input" id="leftName" type="text" placeholder="Имя Левого">
+    <input class="name-input" id="leftName" placeholder="Имя Левого">
     <input type="file" id="leftUpload"><br>
     <img id="leftImg" src="" alt="Выбери фото">
+    <div id="leftScore" class="scoreboard">Очки: 0</div>
   </div>
   <div class="character-box">
-    <input class="name-input" id="rightName" type="text" placeholder="Имя Правого">
+    <input class="name-input" id="rightName" placeholder="Имя Правого">
     <input type="file" id="rightUpload"><br>
     <img id="rightImg" src="" alt="Выбери фото">
+    <div id="rightScore" class="scoreboard">Очки: 0</div>
   </div>
 </div>
 
-<button id="slapBtn">Дать леща</button>
-
+<button id="slapBtn">Нажми, чтобы ударить!</button>
 <div id="chat"></div>
-
 <img id="handImg" src="hand.png" class="hand"/>
 <audio id="slapSound" src="slap2.mp3"></audio>
 
 <script>
-const leftImg = document.getElementById('leftImg');
-const rightImg = document.getElementById('rightImg');
-const leftUpload = document.getElementById('leftUpload');
-const rightUpload = document.getElementById('rightUpload');
-const chat = document.getElementById('chat');
-const slapBtn = document.getElementById('slapBtn');
-const slapSound = document.getElementById('slapSound');
-const handImg = document.getElementById('handImg');
-const leftNameInput = document.getElementById('leftName');
-const rightNameInput = document.getElementById('rightName');
+const leftImg=document.getElementById('leftImg');
+const rightImg=document.getElementById('rightImg');
+const leftUpload=document.getElementById('leftUpload');
+const rightUpload=document.getElementById('rightUpload');
+const leftNameInput=document.getElementById('leftName');
+const rightNameInput=document.getElementById('rightName');
+const slapBtn=document.getElementById('slapBtn');
+const chat=document.getElementById('chat');
+const handImg=document.getElementById('handImg');
+const slapSound=document.getElementById('slapSound');
+const leftScoreDisplay=document.getElementById('leftScore');
+const rightScoreDisplay=document.getElementById('rightScore');
 
-const zoomerPhrases = [
-  "щовель","пикми","абаюдно","тунг тунг сахур","ой ой халепа","киси киси мяу мяу","воглод",
-  "флекс","чиль","топчик","лол","сай","краш","дроп","чел","зашквар","зумерский вайб","чекни","глитч","френд","гопник","треш","кринж","хаус","мемчик","патимейкер","тюн","чилл","ба","шаришь"
-];
+let leftScore=0,rightScore=0;
+let consecutiveLeft=0,consecutiveRight=0;
 
-const normalPhrases = [
-  "ты чо еблан?","ты ваще ебанулся?","на нахуй?","лсный мусор","ублюдок слабый",
-  "иди нахуй","дебил","слабак","пошел вон","отстой","кринж","ни на что не годен","хули","бестолочь","лох","фу","иди гуляй","ну ты и…","чмо","да ты совсем","нахрен","иди в бан","лохушка","тормоз","жмот","пакостник","неадекват","тряпка","отпад","иди лесом","гад"
-];
+const zoomerPhrases=["щовель","пикми","абаюдно","тунг тунг сахур","ой ой халепа","киси киси мяу мяу","воглод","флекс","чиль","топчик","лол","сай","краш","дроп","чел","зашквар"];
+const normalPhrases=["ты чо еблан?","ты ваще ебанулся?","на нахуй?","лсный мусор","ублюдок слабый","иди нахуй","дебил","слабак","пошел вон"];
 
-leftUpload.addEventListener('change', (e) => {
-  leftImg.src = URL.createObjectURL(e.target.files[0]);
-});
+leftUpload.addEventListener('change',e=>{leftImg.src=URL.createObjectURL(e.target.files[0]);});
+rightUpload.addEventListener('change',e=>{rightImg.src=URL.createObjectURL(e.target.files[0]);});
 
-rightUpload.addEventListener('change', (e) => {
-  rightImg.src = URL.createObjectURL(e.target.files[0]);
-});
+slapBtn.addEventListener('click',()=>{
+  if(!leftImg.src || !rightImg.src) return alert("Выбери обе фотки!");
 
-slapBtn.addEventListener('click', () => {
-  if (!leftImg.src || !rightImg.src) return alert("Выбери обе фотки!");
-  
-  // Воспроизвести звук
-  slapSound.currentTime = 0;
-  slapSound.play();
-  
-  // Рассчитать позиции фоток
-  const leftRect = leftImg.getBoundingClientRect();
-  const rightRect = rightImg.getBoundingClientRect();
-  const leftTopMiddle = leftRect.top + leftRect.height/2;
-  const rightTopMiddle = rightRect.top + rightRect.height/2;
+  slapSound.currentTime=0; slapSound.play();
 
-  // Решаем, кто говорит
-  let isLeft = Math.random() > 0.5;
-  let phrase;
-  let startX, endX, topY;
+  const leftRect=leftImg.getBoundingClientRect();
+  const rightRect=rightImg.getBoundingClientRect();
+  const leftTop=leftRect.top+leftRect.height/2;
+  const rightTop=rightRect.top+rightRect.height/2;
+
+  // случайно выбираем, кто ударил
+  let isLeft = Math.random()>0.5;
+  let startX,endX,topY,phrase;
   if(isLeft){
-    phrase = `${leftNameInput.value || "Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
-    startX = leftRect.right + leftRect.width * 0.1;
-    endX = rightRect.left;
-    topY = leftTopMiddle;
+    phrase=`${leftNameInput.value||"Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
+    startX=leftRect.right+leftRect.width*0.1;
+    endX=rightRect.left;
+    topY=leftTop;
+    leftScore++; consecutiveLeft++; consecutiveRight=0;
   } else {
-    phrase = `${rightNameInput.value || "Правый"}: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
-    startX = rightRect.left;
-    endX = leftRect.right;
-    topY = rightTopMiddle;
+    phrase=`${rightNameInput.value||"Правый"}: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
+    startX=rightRect.left;
+    endX=leftRect.right+leftRect.width*0.1;
+    topY=rightTop;
+    rightScore++; consecutiveRight++; consecutiveLeft=0;
   }
 
-  chat.innerHTML += `<p>${phrase}</p>`;
-  chat.scrollTop = chat.scrollHeight;
+  // проверка на фаталити
+  if(consecutiveLeft>=3){
+    phrase=`${leftNameInput.value||"Левый"} совершает ФАТАЛИТИ! 💥💀`;
+    leftScore+=5; // бонус
+    consecutiveLeft=0;
+  }
+  if(consecutiveRight>=3){
+    phrase=`${rightNameInput.value||"Правый"} совершает ФАТАЛИТИ! 💥💀`;
+    rightScore+=5;
+    consecutiveRight=0;
+  }
 
-  handImg.style.top = topY + "px";
-  handImg.style.left = startX + "px";
-  handImg.style.display = "block";
+  chat.innerHTML+=`<p>${phrase}</p>`;
+  chat.scrollTop=chat.scrollHeight;
 
-  // Анимация руки
+  leftScoreDisplay.textContent=`Очки: ${leftScore}`;
+  rightScoreDisplay.textContent=`Очки: ${rightScore}`;
+
+  handImg.style.top=topY+"px";
+  handImg.style.left=startX+"px";
+  handImg.style.display="block";
+
   handImg.animate([
-    { transform: "translate(0, -50%) rotate(-45deg) scale(0)" },
-    { transform: `translate(${endX - startX}px, -50%) rotate(-45deg) scale(1.2)` },
-    { transform: `translate(${endX - startX}px, -50%) rotate(-45deg) scale(1)` }
-  ], {
-    duration: 400,
-    fill: "forwards"
-  });
-
+    { transform:"translate(0,-50%) rotate(-45deg) scale(0)" },
+    { transform:`translate(${endX-startX}px,-50%) rotate(-45deg) scale(1.2)` },
+    { transform:`translate(${endX-startX}px,-50%) rotate(-45deg) scale(1)` }
+  ],{duration:400,fill:"forwards"});
 });
 </script>
-
 </body>
 </html>
