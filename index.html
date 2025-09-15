@@ -67,6 +67,7 @@ button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; bord
 const firebaseConfig = {
   apiKey: "AIzaSyBFK98q0ApvdD7H45VV7hyIrjx0l8N5pnI",
   authDomain: "leshebros.firebaseapp.com",
+  databaseURL: "https://leshebros-default-rtdb.firebaseio.com",
   projectId: "leshebros",
   storageBucket: "leshebros.firebasestorage.app",
   messagingSenderId: "92936380725",
@@ -172,19 +173,29 @@ function setupGameUI(){
 // === Начало игры (только один раз) ===
 startBtn.addEventListener('click',()=>{
     startBtn.style.display='none';
-    roundActive=false;
+    roundActive=true;
+    if(isSingle){
+        setupSingleModeClicks();
+        autoBotLoop();
+    }
     if(!isSingle && roomRef) roomRef.update({lastHit:null,roundActive:true});
-    setTimeout(()=>{ roundActive=true; }, Math.random()*2000+1000);
-    if(isSingle) autoBotLoop();
 });
 
-// === Обновления из Firebase для мультиплеера ===
+// === Удары через Firebase (мультиплеер) ===
 if(!isSingle){
     roomRef?.on("value",snapshot=>{
         const data=snapshot.val();
         if(!data || !data.lastHit) return;
         performHit(data.lastHit==='left');
     });
+}
+
+// === Логика клика по аватарам для одиночного режима ===
+function setupSingleModeClicks(){
+    leftImg.style.cursor='pointer';
+    rightImg.style.cursor='pointer';
+    leftImg.addEventListener('click', ()=>{ if(roundActive) performHit(true); });
+    rightImg.addEventListener('click', ()=>{ if(roundActive) performHit(false); });
 }
 
 // === Удар ===
@@ -231,24 +242,28 @@ function performHit(isLeft){
 
     roundActive=false;
 
-    // Авто-следующий раунд
-    setTimeout(()=>{
-        roundActive=true;
-        if(isSingle) autoBotLoop();
-    },1500);
+    // Авто-следующий ход бота
+    if(isSingle){
+        setTimeout(()=>{
+            if(!roundActive) return;
+            const botLeft=Math.random()>0.5;
+            roundActive=true;
+            performHit(botLeft);
+        }, Math.random()*2000+1000);
+    } else {
+        setTimeout(()=>{ roundActive=true; },1500);
+    }
 }
 
-// === Отправка удара для мультиплеера ===
+// === Кнопки мультиплеера ===
 leftHit.addEventListener('click',()=>{ if(roomRef) roomRef.update({lastHit:"left"}); });
 rightHit.addEventListener('click',()=>{ if(roomRef) roomRef.update({lastHit:"right"}); });
 
-// === Логика бота для одиночной игры ===
+// === Бот цикл одиночной игры ===
 function autoBotLoop(){
     if(!isSingle || !roundActive) return;
-    setTimeout(()=>{
-        const botLeft=Math.random()>0.5;
-        performHit(botLeft);
-    }, Math.random()*2000+1000);
+    const botLeft=Math.random()>0.5;
+    setTimeout(()=>{ performHit(botLeft); }, Math.random()*2000+1000);
 }
 </script>
 </body>
