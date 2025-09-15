@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Лещеброс Онлайн с Лобби</title>
+<title>Лещеброс Онлайн / Одиночный</title>
 <style>
 body { font-family: Arial; background: linear-gradient(135deg,#8e2de2,#4a00e0); color: white; text-align: center; padding: 20px; }
 h1 { font-size: 3em; text-shadow: 2px 2px 5px #000; margin-bottom: 20px; }
@@ -18,9 +18,14 @@ button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; bord
 </head>
 <body>
 
-<h1>Лещеброс Онлайн с Лобби</h1>
+<h1>Лещеброс</h1>
 
 <div>
+  <button id="singleBtn">Одиночная игра</button>
+  <button id="multiBtn">Мультиплеер</button>
+</div>
+
+<div id="multiLobby" style="margin-top:10px;">
     <button id="createRoom">Создать комнату</button>
     <input id="joinCode" placeholder="Введите код комнаты">
     <button id="joinRoom">Подключиться</button>
@@ -72,6 +77,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // === DOM элементы ===
+const singleBtn=document.getElementById('singleBtn');
+const multiBtn=document.getElementById('multiBtn');
+const multiLobby=document.getElementById('multiLobby');
 const createRoom=document.getElementById('createRoom');
 const joinRoomBtn=document.getElementById('joinRoom');
 const joinCodeInput=document.getElementById('joinCode');
@@ -101,10 +109,32 @@ let leftScore=0,rightScore=0;
 let consecutiveLeft=0,consecutiveRight=0;
 let roundActive=false;
 let roomRef=null;
+let isSingle=false;
 
 // === Загрузка фото ===
 leftUpload.addEventListener('change',e=>{leftImg.src=URL.createObjectURL(e.target.files[0]);});
 rightUpload.addEventListener('change',e=>{rightImg.src=URL.createObjectURL(e.target.files[0]);});
+
+// === Выбор режима ===
+singleBtn.addEventListener('click',()=>{
+    isSingle=true;
+    multiLobby.style.display='none';
+    gameArea.style.display='flex';
+    startBtn.style.display='inline-block';
+    leftHit.style.display='none';
+    rightHit.style.display='none';
+    roomInfo.textContent='Одиночная игра с ботом';
+});
+
+multiBtn.addEventListener('click',()=>{
+    isSingle=false;
+    multiLobby.style.display='block';
+    gameArea.style.display='none';
+    startBtn.style.display='none';
+    leftHit.style.display='inline-block';
+    rightHit.style.display='inline-block';
+    roomInfo.textContent='';
+});
 
 // === Создание и подключение к комнате ===
 function generateRoomCode(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
@@ -133,24 +163,29 @@ joinRoomBtn.addEventListener('click',()=>{
 function setupGameUI(){
     gameArea.style.display="flex";
     startBtn.style.display="inline-block";
-    leftHit.style.display="inline-block";
-    rightHit.style.display="inline-block";
+    if(!isSingle){
+        leftHit.style.display="inline-block";
+        rightHit.style.display="inline-block";
+    }
 }
 
 // === Начало игры (только один раз) ===
 startBtn.addEventListener('click',()=>{
-    startBtn.style.display='none'; // прячем кнопку навсегда
+    startBtn.style.display='none';
     roundActive=false;
-    roomRef.update({lastHit:null,roundActive:true});
+    if(!isSingle && roomRef) roomRef.update({lastHit:null,roundActive:true});
     setTimeout(()=>{ roundActive=true; }, Math.random()*2000+1000);
+    if(isSingle) autoBotLoop();
 });
 
-// === Обновления из Firebase ===
-roomRef?.on("value",snapshot=>{
-    const data=snapshot.val();
-    if(!data || !data.lastHit) return;
-    performHit(data.lastHit==='left');
-});
+// === Обновления из Firebase для мультиплеера ===
+if(!isSingle){
+    roomRef?.on("value",snapshot=>{
+        const data=snapshot.val();
+        if(!data || !data.lastHit) return;
+        performHit(data.lastHit==='left');
+    });
+}
 
 // === Удар ===
 function performHit(isLeft){
@@ -196,19 +231,25 @@ function performHit(isLeft){
 
     roundActive=false;
 
-    // Авто-следующий раунд через 1.5 сек
+    // Авто-следующий раунд
     setTimeout(()=>{
-        if(roomRef){
-            roomRef.update({lastHit:null, roundActive:true});
-            roundActive=true;
-        }
+        roundActive=true;
+        if(isSingle) autoBotLoop();
     },1500);
 }
 
-// === Отправка удара ===
-leftHit.addEventListener('click',()=>{ roomRef.update({lastHit:"left"}); });
-rightHit.addEventListener('click',()=>{ roomRef.update({lastHit:"right"}); });
+// === Отправка удара для мультиплеера ===
+leftHit.addEventListener('click',()=>{ if(roomRef) roomRef.update({lastHit:"left"}); });
+rightHit.addEventListener('click',()=>{ if(roomRef) roomRef.update({lastHit:"right"}); });
 
+// === Логика бота для одиночной игры ===
+function autoBotLoop(){
+    if(!isSingle || !roundActive) return;
+    setTimeout(()=>{
+        const botLeft=Math.random()>0.5;
+        performHit(botLeft);
+    }, Math.random()*2000+1000);
+}
 </script>
 </body>
 </html>
