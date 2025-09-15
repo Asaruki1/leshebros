@@ -4,70 +4,65 @@
 <meta charset="UTF-8">
 <title>Лещеброс</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 <body>
+
+<h1>Лещеброс</h1>
+
+<div id="menu">
+  <button id="singleBtn">Одиночная игра</button>
+  <button id="multiBtn">Играть с другом</button>
+</div>
+
+<div id="multiLobby" style="display:none;">
+  <input type="text" id="joinCode" placeholder="Код комнаты">
+  <button id="createRoom">Создать комнату</button>
+  <button id="joinRoom">Присоединиться</button>
+  <button id="backBtn">Назад</button>
+</div>
+
+<div id="profile" style="display:none;">
+  <h2>Профиль</h2>
+  <input id="playerName" placeholder="Имя">
+  <input type="file" id="playerAvatar">
+  <img id="avatarPreview" src="assets/default_bot.png">
+  <select id="soundSelect">
+    <option value="slap">slap</option>
+    <option value="slap2">slap2</option>
+  </select>
+  <button id="saveProfile">Сохранить</button>
+</div>
 
 <button id="profileBtn" class="topBtn">Профиль</button>
 <button id="homeBtn" class="topBtn">🏠</button>
 
-<h1>Лещеброс</h1>
-
-<!-- Меню -->
-<div id="menu">
-    <button id="singleBtn">Одиночная игра</button>
-    <button id="multiBtn">Играть с другом</button>
-</div>
-
-<!-- Лобби мультиплеера -->
-<div id="multiLobby" style="display:none;">
-    <button id="createRoom">Создать комнату</button>
-    <input id="joinCode" placeholder="Введите код комнаты">
-    <button id="joinRoom">Присоединиться</button>
-    <button id="backBtn">Назад</button>
-</div>
-
-<!-- Профиль -->
-<div id="profile" style="display:none;">
-    <h2>Профиль</h2>
-    <input id="playerName" placeholder="Имя">
-    <input type="file" id="playerAvatar"><br>
-    <img id="avatarPreview" src="assets/default_bot.png" alt="Аватар">
-    <br>
-    <label>Выбери звук удара:</label>
-    <select id="soundSelect">
-      <option value="slap">Slap 1</option>
-      <option value="slap2">Slap 2</option>
-    </select>
-    <br>
-    <button id="saveProfile">Сохранить</button>
-</div>
-
-<!-- Игровая зона -->
 <div id="gameArea" style="display:none;">
-    <div class="characters">
-        <div class="character-box">
-            <div id="leftNameDisplay"></div>
-            <img id="leftImg" src="assets/default_bot.png">
-            <div id="leftScore">Очки: 0</div>
-        </div>
-        <div class="character-box">
-            <div id="rightNameDisplay"></div>
-            <img id="rightImg" src="assets/default_bot.png">
-            <div id="rightScore">Очки: 0</div>
-        </div>
+  <div class="characters">
+    <div class="character-box">
+      <img id="leftImg" src="assets/default_bot.png">
+      <div id="leftNameDisplay">Левый</div>
+      <div id="leftScore">Очки: 0</div>
     </div>
-    <div id="roundMsg"></div>
-    <div id="chat">
-        <input id="chatInput" placeholder="Написать сообщение">
-        <button id="sendChat">Отправить</button>
+    <div class="character-box">
+      <img id="rightImg" src="assets/default_bot.png">
+      <div id="rightNameDisplay">Правый</div>
+      <div id="rightScore">Очки: 0</div>
     </div>
+  </div>
+  <div id="roundMsg"></div>
+  <div id="chat">
+    <input id="chatInput" placeholder="Сообщение">
+    <button id="sendChat">Отправить</button>
+  </div>
 </div>
 
-<img id="handImg" src="assets/hand.png" class="hand"/>
+<img id="handImg" src="assets/hand.png" class="hand">
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="js/firebase.js"></script>
-<script src="js/main.js"></script>
+<script src="firebase.js"></script>
+<script src="main.js"></script>
+
 </body>
 </html>
