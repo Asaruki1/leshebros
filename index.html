@@ -44,7 +44,7 @@ button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; bord
 </div>
 
 <div>
-    <button id="startBtn" style="display:none;">Начать раунд</button>
+    <button id="startBtn" style="display:none;">Начать игру</button>
     <button id="leftHit" style="display:none;">Левый удар</button>
     <button id="rightHit" style="display:none;">Правый удар</button>
 </div>
@@ -60,13 +60,13 @@ button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; bord
 <script>
 // === Firebase config ===
 const firebaseConfig = {
-  apiKey: "AIzaSyBFK98q0ApvdD7H45VV7hyIrjx0l8N5pnI",
-  authDomain: "leshebros.firebaseapp.com",
-  projectId: "leshebros",
-  storageBucket: "leshebros.firebasestorage.app",
-  messagingSenderId: "92936380725",
-  appId: "1:92936380725:web:9c6a70acc2cb3c3db9ec7c",
-  measurementId: "G-HMXVSDQLP7"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -106,7 +106,7 @@ let roomRef=null;
 leftUpload.addEventListener('change',e=>{leftImg.src=URL.createObjectURL(e.target.files[0]);});
 rightUpload.addEventListener('change',e=>{rightImg.src=URL.createObjectURL(e.target.files[0]);});
 
-// === Функции создания комнаты ===
+// === Создание и подключение к комнате ===
 function generateRoomCode(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
 createRoom.addEventListener('click',()=>{
@@ -137,11 +137,12 @@ function setupGameUI(){
     rightHit.style.display="inline-block";
 }
 
-// === Начало раунда ===
+// === Начало игры (только один раз) ===
 startBtn.addEventListener('click',()=>{
+    startBtn.style.display='none'; // прячем кнопку навсегда
     roundActive=false;
     roomRef.update({lastHit:null,roundActive:true});
-    setTimeout(()=>{roundActive=true;},Math.random()*2000+1000);
+    setTimeout(()=>{ roundActive=true; }, Math.random()*2000+1000);
 });
 
 // === Обновления из Firebase ===
@@ -194,6 +195,14 @@ function performHit(isLeft){
     ],{duration:400,fill:"forwards"});
 
     roundActive=false;
+
+    // Авто-следующий раунд через 1.5 сек
+    setTimeout(()=>{
+        if(roomRef){
+            roomRef.update({lastHit:null, roundActive:true});
+            roundActive=true;
+        }
+    },1500);
 }
 
 // === Отправка удара ===
