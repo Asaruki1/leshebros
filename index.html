@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Лещеброс</title>
+<style>
+  body { font-family: Arial; background: linear-gradient(to right, #8e2de2, #4a00e0); color: white; text-align: center; padding: 20px;}
+  .characters { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;}
+  .characters img { width: 150px; height: 150px; object-fit: cover; border: 3px solid transparent; border-radius: 10px; cursor: pointer;}
+  .characters img.selected { border-color: yellow; }
+  #chat { max-width: 500px; margin: 20px auto; background: white; color: black; border-radius: 10px; padding: 10px; height: 200px; overflow-y: auto;}
+  button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; background: yellow; color: black; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Лещеброс</h1>
+
+<div class="characters">
+  <div>
+    <h3>Левый</h3>
+    <input type="file" id="leftUpload"><br>
+    <img id="leftImg" src="" alt="Выбери фото">
+  </div>
+  <div>
+    <h3>Правый</h3>
+    <input type="file" id="rightUpload"><br>
+    <img id="rightImg" src="" alt="Выбери фото">
+  </div>
+</div>
+
+<button id="slapBtn">Дать леща</button>
+
+<div id="chat"></div>
+
+<audio id="slapSound" src="https://www.soundjay.com/human/slap-1.mp3"></audio>
+
+<script>
+const leftImg = document.getElementById('leftImg');
+const rightImg = document.getElementById('rightImg');
+const leftUpload = document.getElementById('leftUpload');
+const rightUpload = document.getElementById('rightUpload');
+const chat = document.getElementById('chat');
+const slapBtn = document.getElementById('slapBtn');
+const slapSound = document.getElementById('slapSound');
+
+const zoomerPhrases = ["щовель", "пикми", "абаюдно", "тунг тунг сахур", "ой ой халепа", "киси киси мяу мяу", "воглод"];
+const normalPhrases = ["ты чо еблан?", "ты ваще ебанулся?", "на нахуй?", "лсный мусор", "ублюдок слабый"];
+
+leftUpload.addEventListener('change', (e) => {
+  leftImg.src = URL.createObjectURL(e.target.files[0]);
+});
+
+rightUpload.addEventListener('change', (e) => {
+  rightImg.src = URL.createObjectURL(e.target.files[0]);
+});
+
+slapBtn.addEventListener('click', () => {
+  if (!leftImg.src || !rightImg.src) return alert("Выбери обе фотки!");
+  
+  slapSound.play();
+  
+  const phrase = Math.random() > 0.5 
+    ? `Левый: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`
+    : `Правый: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
+    
+  chat.innerHTML += `<p>${phrase}</p>`;
+  chat.scrollTop = chat.scrollHeight;
+});
+</script>
+
+</body>
+</html>
