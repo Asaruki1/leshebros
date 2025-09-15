@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <title>Лещеброс</title>
 <style>
-  body { font-family: Arial, sans-serif; background: linear-gradient(135deg,#8e2de2,#4a00e0); color: white; text-align: center; padding: 20px; }
+  body { 
+    font-family: Arial, sans-serif; 
+    background: linear-gradient(135deg,#8e2de2,#4a00e0); 
+    color: white; 
+    text-align: center; 
+    padding: 20px; 
+  }
   h1 { font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 5px #000; }
   .characters { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
   .characters img { width: 150px; height: 150px; object-fit: cover; border: 3px solid transparent; border-radius: 15px; cursor: pointer; transition: transform 0.3s; }
@@ -12,12 +18,12 @@
   button { padding: 15px 30px; font-size: 18px; border: none; border-radius: 15px; cursor: pointer; background: yellow; color: black; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; }
   button:hover { transform: scale(1.05); }
   #chat { max-width: 600px; margin: 20px auto; background: rgba(255,255,255,0.9); color: black; border-radius: 15px; padding: 15px; height: 250px; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-  .hand { position: absolute; width: 100px; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); display: none; z-index: 10; }
-  .hand.animate { display: block; animation: slapAnim 0.3s forwards; }
-  @keyframes slapAnim {
-    0% { transform: translate(-50%, -50%) rotate(-45deg) scale(0); }
-    50% { transform: translate(-50%, -50%) rotate(-45deg) scale(1.2); }
-    100% { transform: translate(-50%, -50%) rotate(-45deg) scale(1); }
+  .hand { 
+    position: absolute; 
+    width: 100px; 
+    transform: translate(-50%, -50%) rotate(-45deg); 
+    display: none; 
+    z-index: 10; 
   }
 </style>
 </head>
@@ -42,8 +48,8 @@
 
 <div id="chat"></div>
 
-<img id="handImg" src="hand.png" class="hand"/>
-<audio id="slapSound" src="slap2.mp3"></audio>
+<img id="handImg" src="https://i.imgur.com/FfHR6Sl.png" class="hand"/>
+<audio id="slapSound" src="https://www.soundjay.com/human/sounds/slap-01.mp3"></audio>
 
 <script>
 const leftImg = document.getElementById('leftImg');
@@ -80,10 +86,26 @@ slapBtn.addEventListener('click', () => {
   slapSound.currentTime = 0;
   slapSound.play();
   
-  // Показать анимацию руки
-  handImg.classList.remove('animate');
-  void handImg.offsetWidth; // сброс анимации
-  handImg.classList.add('animate');
+  // Рассчитать позицию руки по центру фоток
+  const leftRect = leftImg.getBoundingClientRect();
+  const rightRect = rightImg.getBoundingClientRect();
+  const topMiddle = leftRect.top + leftRect.height/2;
+  const leftStart = leftRect.right;
+  const rightEnd = rightRect.left;
+
+  handImg.style.top = topMiddle + "px";
+  handImg.style.left = leftStart + "px";
+  handImg.style.display = "block";
+
+  // Анимация руки
+  handImg.animate([
+    { transform: "translate(0, -50%) rotate(-45deg) scale(0)" },
+    { transform: `translate(${rightEnd - leftStart}px, -50%) rotate(-45deg) scale(1.2)` },
+    { transform: `translate(${rightEnd - leftStart}px, -50%) rotate(-45deg) scale(1)` }
+  ], {
+    duration: 400,
+    fill: "forwards"
+  });
 
   // Случайная фраза
   const phrase = Math.random() > 0.5 
