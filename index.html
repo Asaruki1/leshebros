@@ -102,7 +102,7 @@ slapBtn.addEventListener('click', () => {
   let startX, endX, topY;
   if(isLeft){
     phrase = `${leftNameInput.value || "Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
-    startX = leftRect.right;
+    startX = leftRect.right + leftRect.width * 0.1;
     endX = rightRect.left;
     topY = leftTopMiddle;
   } else {
