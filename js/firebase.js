@@ -1,7 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBFK98q0ApvdD7H45VV7hyIrjx0l8N5pnI",
   authDomain: "leshebros.firebaseapp.com",
-  databaseURL: "https://leshebros-default-rtdb.firebaseio.com",
   projectId: "leshebros",
   storageBucket: "leshebros.firebasestorage.app",
   messagingSenderId: "92936380725",
@@ -9,4 +8,5 @@ const firebaseConfig = {
   measurementId: "G-HMXVSDQLP7"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+const db = firebase.database();
+const storage = firebase.storage();
