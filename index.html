@@ -2,26 +2,33 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Лещеброс Онлайн</title>
+<title>Лещеброс Онлайн с Лобби</title>
 <style>
 body { font-family: Arial; background: linear-gradient(135deg,#8e2de2,#4a00e0); color: white; text-align: center; padding: 20px; }
-h1 { font-size: 3em; text-shadow: 2px 2px 5px #000; }
+h1 { font-size: 3em; text-shadow: 2px 2px 5px #000; margin-bottom: 20px; }
 .characters { display:flex; justify-content:center; gap:30px; margin-bottom:20px; }
 .character-box { text-align:center; position: relative; }
 .character-box img { width:150px; height:150px; object-fit:cover; border-radius:15px; border:3px solid transparent; cursor:pointer; }
 input.name-input { margin-bottom:5px; padding:5px; border-radius:5px; border:none; text-align:center; }
-button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cursor:pointer; background:yellow; color:black; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3); margin:5px;}
-#chat { max-width:600px; margin:20px auto; background:rgba(255,255,255,0.9); color:black; border-radius:15px; padding:15px; height:250px; overflow-y:auto; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
+button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; }
+#chat { max-width:600px; margin:20px auto; background:rgba(255,255,255,0.9); color:black; border-radius:15px; padding:15px; height:200px; overflow-y:auto; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
 .hand { position:absolute; width:100px; transform:translate(-50%,-50%) rotate(-45deg); display:none; z-index:10; }
-.flash { position:absolute; width:150px; height:150px; border-radius:50%; background: radial-gradient(circle, rgba(255,255,0,0.8) 0%, rgba(255,0,255,0) 70%); display:none; z-index:20;}
-.signal { font-size:2em; margin:15px;}
+.signal { font-size:1.5em; margin:10px; }
 </style>
 </head>
 <body>
 
-<h1>Лещеброс Онлайн</h1>
+<h1>Лещеброс Онлайн с Лобби</h1>
 
-<div class="characters">
+<div>
+    <button id="createRoom">Создать комнату</button>
+    <input id="joinCode" placeholder="Введите код комнаты">
+    <button id="joinRoom">Подключиться</button>
+</div>
+
+<div class="signal" id="roomInfo"></div>
+
+<div class="characters" id="gameArea" style="display:none;">
   <div class="character-box">
     <input class="name-input" id="leftName" placeholder="Имя Левого">
     <input type="file" id="leftUpload"><br>
@@ -36,14 +43,14 @@ button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cur
   </div>
 </div>
 
-<div class="signal" id="signal">Нажмите "Начать раунд"</div>
-<button id="startBtn">Начать раунд</button>
-<button id="leftHit">Левый удар</button>
-<button id="rightHit">Правый удар</button>
+<div>
+    <button id="startBtn" style="display:none;">Начать раунд</button>
+    <button id="leftHit" style="display:none;">Левый удар</button>
+    <button id="rightHit" style="display:none;">Правый удар</button>
+</div>
 
 <div id="chat"></div>
 <img id="handImg" src="https://i.imgur.com/FfHR6Sl.png" class="hand"/>
-<div id="flash" class="flash"></div>
 <audio id="slapSound" src="https://www.soundjay.com/human/sounds/slap-01.mp3"></audio>
 
 <!-- Firebase -->
@@ -53,74 +60,100 @@ button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cur
 <script>
 // === Firebase config ===
 const firebaseConfig = {
-  apiKey: "AIzaSyBFK98q0ApvdD7H45VV7hyIrjx0l8N5pnI",
-  authDomain: "leshebros.firebaseapp.com",
-  projectId: "leshebros",
-  storageBucket: "leshebros.firebasestorage.app",
-  messagingSenderId: "92936380725",
-  appId: "1:92936380725:web:9c6a70acc2cb3c3db9ec7c",
-  measurementId: "G-HMXVSDQLP7"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // === DOM элементы ===
+const createRoom=document.getElementById('createRoom');
+const joinRoomBtn=document.getElementById('joinRoom');
+const joinCodeInput=document.getElementById('joinCode');
+const roomInfo=document.getElementById('roomInfo');
+
 const leftImg=document.getElementById('leftImg');
 const rightImg=document.getElementById('rightImg');
 const leftUpload=document.getElementById('leftUpload');
 const rightUpload=document.getElementById('rightUpload');
 const leftNameInput=document.getElementById('leftName');
 const rightNameInput=document.getElementById('rightName');
-const slapSound=document.getElementById('slapSound');
-const handImg=document.getElementById('handImg');
-const flash=document.getElementById('flash');
-const chat=document.getElementById('chat');
 const leftScoreDisplay=document.getElementById('leftScore');
 const rightScoreDisplay=document.getElementById('rightScore');
+const slapSound=document.getElementById('slapSound');
+const handImg=document.getElementById('handImg');
+const chat=document.getElementById('chat');
+
+const gameArea=document.getElementById('gameArea');
 const startBtn=document.getElementById('startBtn');
 const leftHit=document.getElementById('leftHit');
 const rightHit=document.getElementById('rightHit');
-const signal=document.getElementById('signal');
 
-// === Игровые переменные ===
+const zoomerPhrases=["щовель","пикми","абаюдно","тунг тунг сахур","ой ой халепа","киси киси мяу мяу"];
+const normalPhrases=["ты чо еблан?","ты ваще ебанулся?","на нахуй?","лсный мусор","ублюдок слабый"];
+
 let leftScore=0,rightScore=0;
 let consecutiveLeft=0,consecutiveRight=0;
 let roundActive=false;
+let roomRef=null;
 
 // === Загрузка фото ===
 leftUpload.addEventListener('change',e=>{leftImg.src=URL.createObjectURL(e.target.files[0]);});
 rightUpload.addEventListener('change',e=>{rightImg.src=URL.createObjectURL(e.target.files[0]);});
 
-// === Комната Firebase ===
-let roomId = "room1";
-const roomRef = db.ref("rooms/"+roomId);
+// === Функции создания комнаты ===
+function generateRoomCode(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
+
+createRoom.addEventListener('click',()=>{
+    const code=generateRoomCode();
+    roomRef=db.ref('rooms/'+code);
+    roomRef.set({players:{},leftScore:0,rightScore:0,lastHit:null,roundActive:false});
+    roomInfo.textContent="Комната создана! Код: "+code;
+    setupGameUI();
+});
+
+joinRoomBtn.addEventListener('click',()=>{
+    const code=joinCodeInput.value.trim().toUpperCase();
+    if(!code) return alert("Введите код комнаты!");
+    roomRef=db.ref('rooms/'+code);
+    roomRef.once('value',snapshot=>{
+        if(snapshot.exists()){
+            roomInfo.textContent="Подключено к комнате: "+code;
+            setupGameUI();
+        } else alert("Комната не найдена!");
+    });
+});
+
+// === Показываем игровую панель ===
+function setupGameUI(){
+    gameArea.style.display="flex";
+    startBtn.style.display="inline-block";
+    leftHit.style.display="inline-block";
+    rightHit.style.display="inline-block";
+}
 
 // === Начало раунда ===
 startBtn.addEventListener('click',()=>{
-    signal.textContent="Готовьтесь...";
     roundActive=false;
-    roomRef.update({lastHit:null}); // очистка предыдущего раунда
-    setTimeout(()=>{
-        signal.textContent="Ударь! 🏁";
-        roundActive=true;
-    }, Math.random()*2000+1000);
+    roomRef.update({lastHit:null,roundActive:true});
+    setTimeout(()=>{roundActive=true;},Math.random()*2000+1000);
 });
 
-// === Слушаем обновления комнаты ===
-roomRef.on("value", snapshot=>{
-    const data = snapshot.val();
+// === Обновления из Firebase ===
+roomRef?.on("value",snapshot=>{
+    const data=snapshot.val();
     if(!data || !data.lastHit) return;
-    performHit(data.lastHit === "left");
+    performHit(data.lastHit==='left');
 });
 
-// === Функция удара ===
-const zoomerPhrases=["щовель","пикми","абаюдно","тунг тунг сахур","ой ой халепа","киси киси мяу мяу"];
-const normalPhrases=["ты чо еблан?","ты ваще ебанулся?","на нахуй?","лсный мусор","ублюдок слабый","иди нахуй","дебил"];
-
+// === Удар ===
 function performHit(isLeft){
     if(!roundActive) return;
-    if(!leftImg.src || !rightImg.src) return;
-
     slapSound.currentTime=0; slapSound.play();
 
     const leftRect=leftImg.getBoundingClientRect();
@@ -136,22 +169,14 @@ function performHit(isLeft){
         topY=leftTop;
         leftScore++; consecutiveLeft++; consecutiveRight=0;
         phrase=`${leftNameInput.value||"Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
-        if(consecutiveLeft>=3){
-            isFatality=true;
-            phrase=`${leftNameInput.value||"Левый"} совершает ФАТАЛИТИ! 💥💀`;
-            leftScore+=5; consecutiveLeft=0;
-        }
+        if(consecutiveLeft>=3){ isFatality=true; phrase=`${leftNameInput.value||"Левый"} совершает ФАТАЛИТИ! 💥💀`; leftScore+=5; consecutiveLeft=0;}
     } else {
         startX=rightRect.left;
         endX=leftRect.right+leftRect.width*0.1;
         topY=rightTop;
         rightScore++; consecutiveRight++; consecutiveLeft=0;
         phrase=`${rightNameInput.value||"Правый"}: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
-        if(consecutiveRight>=3){
-            isFatality=true;
-            phrase=`${rightNameInput.value||"Правый"} совершает ФАТАЛИТИ! 💥💀`;
-            rightScore+=5; consecutiveRight=0;
-        }
+        if(consecutiveRight>=3){ isFatality=true; phrase=`${rightNameInput.value||"Правый"} совершает ФАТАЛИТИ! 💥💀`; rightScore+=5; consecutiveRight=0;}
     }
 
     chat.innerHTML+=`<p>${phrase}</p>`; chat.scrollTop=chat.scrollHeight;
@@ -168,20 +193,10 @@ function performHit(isLeft){
         { transform:`translate(${endX-startX}px,-50%) rotate(-45deg) scale(1)` }
     ],{duration:400,fill:"forwards"});
 
-    if(isFatality){
-        flash.style.top=topY-75+"px";
-        flash.style.left=endX-75+"px";
-        flash.style.display="block";
-        flash.animate([{ transform:"scale(0.5)", opacity:1 },{ transform:"scale(1.5)", opacity:0 }],
-            { duration:600, fill:"forwards"});
-        setTimeout(()=>{flash.style.display="none";},600);
-    }
-
     roundActive=false;
-    signal.textContent="Нажмите 'Начать раунд' для следующего удара";
 }
 
-// === Отправка удара на Firebase ===
+// === Отправка удара ===
 leftHit.addEventListener('click',()=>{ roomRef.update({lastHit:"left"}); });
 rightHit.addEventListener('click',()=>{ roomRef.update({lastHit:"right"}); });
 
