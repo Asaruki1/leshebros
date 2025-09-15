@@ -13,7 +13,13 @@ input.name-input { margin-bottom:5px; padding:5px; border-radius:5px; border:non
 button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cursor:pointer; background:yellow; color:black; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
 #chat { max-width:600px; margin:20px auto; background:rgba(255,255,255,0.9); color:black; border-radius:15px; padding:15px; height:250px; overflow-y:auto; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
 .hand { position:absolute; width:100px; transform:translate(-50%,-50%) rotate(-45deg); display:none; z-index:10; }
-.scoreboard { margin-top:15px; font-size:18px; }
+.flash { 
+  position:absolute; 
+  width:150px; height:150px; 
+  border-radius:50%; 
+  background: radial-gradient(circle, rgba(255,255,0,0.8) 0%, rgba(255,0,255,0) 70%); 
+  display:none; z-index:20;
+}
 </style>
 </head>
 <body>
@@ -25,19 +31,20 @@ button { padding:15px 30px; font-size:18px; border:none; border-radius:15px; cur
     <input class="name-input" id="leftName" placeholder="Имя Левого">
     <input type="file" id="leftUpload"><br>
     <img id="leftImg" src="" alt="Выбери фото">
-    <div id="leftScore" class="scoreboard">Очки: 0</div>
+    <div id="leftScore">Очки: 0</div>
   </div>
   <div class="character-box">
     <input class="name-input" id="rightName" placeholder="Имя Правого">
     <input type="file" id="rightUpload"><br>
     <img id="rightImg" src="" alt="Выбери фото">
-    <div id="rightScore" class="scoreboard">Очки: 0</div>
+    <div id="rightScore">Очки: 0</div>
   </div>
 </div>
 
 <button id="slapBtn">Нажми, чтобы ударить!</button>
 <div id="chat"></div>
 <img id="handImg" src="hand.png" class="hand"/>
+<div id="flash" class="flash"></div>
 <audio id="slapSound" src="slap2.mp3"></audio>
 
 <script>
@@ -53,6 +60,7 @@ const handImg=document.getElementById('handImg');
 const slapSound=document.getElementById('slapSound');
 const leftScoreDisplay=document.getElementById('leftScore');
 const rightScoreDisplay=document.getElementById('rightScore');
+const flash=document.getElementById('flash');
 
 let leftScore=0,rightScore=0;
 let consecutiveLeft=0,consecutiveRight=0;
@@ -65,46 +73,44 @@ rightUpload.addEventListener('change',e=>{rightImg.src=URL.createObjectURL(e.tar
 
 slapBtn.addEventListener('click',()=>{
   if(!leftImg.src || !rightImg.src) return alert("Выбери обе фотки!");
-
+  
   slapSound.currentTime=0; slapSound.play();
-
+  
   const leftRect=leftImg.getBoundingClientRect();
   const rightRect=rightImg.getBoundingClientRect();
   const leftTop=leftRect.top+leftRect.height/2;
   const rightTop=rightRect.top+rightRect.height/2;
 
-  // случайно выбираем, кто ударил
-  let isLeft = Math.random()>0.5;
-  let startX,endX,topY,phrase;
+  let isLeft=Math.random()>0.5;
+  let startX,endX,topY,phrase,isFatality=false;
+
   if(isLeft){
-    phrase=`${leftNameInput.value||"Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
     startX=leftRect.right+leftRect.width*0.1;
     endX=rightRect.left;
     topY=leftTop;
     leftScore++; consecutiveLeft++; consecutiveRight=0;
+    phrase=`${leftNameInput.value||"Левый"}: ${zoomerPhrases[Math.floor(Math.random()*zoomerPhrases.length)]}`;
+    if(consecutiveLeft>=3){ 
+      isFatality=true;
+      phrase=`${leftNameInput.value||"Левый"} совершает ФАТАЛИТИ! 💥💀`; 
+      leftScore+=5; 
+      consecutiveLeft=0;
+    }
   } else {
-    phrase=`${rightNameInput.value||"Правый"}: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
     startX=rightRect.left;
     endX=leftRect.right+leftRect.width*0.1;
     topY=rightTop;
     rightScore++; consecutiveRight++; consecutiveLeft=0;
+    phrase=`${rightNameInput.value||"Правый"}: ${normalPhrases[Math.floor(Math.random()*normalPhrases.length)]}`;
+    if(consecutiveRight>=3){
+      isFatality=true;
+      phrase=`${rightNameInput.value||"Правый"} совершает ФАТАЛИТИ! 💥💀`; 
+      rightScore+=5;
+      consecutiveRight=0;
+    }
   }
 
-  // проверка на фаталити
-  if(consecutiveLeft>=3){
-    phrase=`${leftNameInput.value||"Левый"} совершает ФАТАЛИТИ! 💥💀`;
-    leftScore+=5; // бонус
-    consecutiveLeft=0;
-  }
-  if(consecutiveRight>=3){
-    phrase=`${rightNameInput.value||"Правый"} совершает ФАТАЛИТИ! 💥💀`;
-    rightScore+=5;
-    consecutiveRight=0;
-  }
-
-  chat.innerHTML+=`<p>${phrase}</p>`;
-  chat.scrollTop=chat.scrollHeight;
-
+  chat.innerHTML+=`<p>${phrase}</p>`; chat.scrollTop=chat.scrollHeight;
   leftScoreDisplay.textContent=`Очки: ${leftScore}`;
   rightScoreDisplay.textContent=`Очки: ${rightScore}`;
 
@@ -112,12 +118,28 @@ slapBtn.addEventListener('click',()=>{
   handImg.style.left=startX+"px";
   handImg.style.display="block";
 
+  // Анимация руки
   handImg.animate([
     { transform:"translate(0,-50%) rotate(-45deg) scale(0)" },
     { transform:`translate(${endX-startX}px,-50%) rotate(-45deg) scale(1.2)` },
     { transform:`translate(${endX-startX}px,-50%) rotate(-45deg) scale(1)` }
   ],{duration:400,fill:"forwards"});
+
+  // Эффект вспышки при фаталити
+  if(isFatality){
+    flash.style.top=topY-75+"px";
+    flash.style.left=endX-75+"px";
+    flash.style.display="block";
+    flash.style.opacity=1;
+    flash.animate([
+      { transform:"scale(0.5)", opacity:1 },
+      { transform:"scale(1.5)", opacity:0 }
+    ], { duration:600, fill:"forwards" });
+    setTimeout(()=>{flash.style.display="none";},600);
+  }
+
 });
 </script>
+
 </body>
 </html>
