@@ -1,0 +1,8 @@
+body { font-family: Arial; background: linear-gradient(135deg,#8e2de2,#4a00e0); color: white; text-align:center; padding:20px;}
+h1 { font-size:3em; text-shadow:2px 2px 5px #000; margin-bottom:20px;}
+button { padding:10px 20px; margin:5px; font-size:16px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; }
+.characters { display:flex; justify-content:center; gap:30px; margin-bottom:20px; }
+.character-box { text-align:center; position: relative; }
+.character-box img { width:150px; height:150px; object-fit:cover; border-radius:15px; border:3px solid transparent; cursor:pointer; }
+#chat { max-width:600px; margin:20px auto; background:rgba(255,255,255,0.9); color:black; border-radius:15px; padding:10px; height:200px; overflow-y:auto;}
+.hand { position:absolute; width:100px; transform:translate(-50%,-50%) rotate(-45deg); display:none; z-index:10;}
